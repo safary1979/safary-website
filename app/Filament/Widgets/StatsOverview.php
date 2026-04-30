@@ -2,47 +2,54 @@
 
 namespace App\Filament\Widgets;
 
-use App\Models\Bot;
-use App\Models\BotState;
-use App\Models\Trade;
-use Filament\Widgets\StatsOverviewWidget as BaseWidget;
-use Filament\Widgets\StatsOverviewWidget\Stat;
+use App\Services\TenantService;
+use Filament\Notifications\Notification;
+use Filament\Widgets\Widget;
+use Livewire\Attributes\On;
 
-class StatsOverview extends BaseWidget
+class StatsOverview extends Widget
 {
     protected static ?int $sort = 1;
-    protected static ?string $pollingInterval = '10s';
+    protected static ?string $pollingInterval = null;
+    protected int | string | array $columnSpan = 'full';
+    protected static string $view = 'filament.widgets.stats-compact';
 
-    protected function getStats(): array
+    #[On('dashboardRefresh')]
+    public function refresh(): void {}
+
+    public function newSession(): void
     {
-        try {
-            $equity  = (float) BotState::sum('equity');
-            $trades  = Trade::query();
-            $closed  = (clone $trades)->whereNotNull('exit_time');
-            $pnl     = (float) (clone $closed)->sum('pnl_usdt');
-            $total   = (clone $closed)->count();
-            $wins    = (clone $closed)->where('pnl_usdt', '>', 0)->count();
-            $winRate = $total > 0 ? round($wins / $total * 100, 1) : 0;
-            $running = Bot::where('status', 'running')->count();
-            $totalBots = Bot::count();
-        } catch (\Throwable $e) {
-            return [
-                Stat::make('Bot DB', 'не підключена')
-                    ->description('Перевір BOT_DB_PATH у .env')
-                    ->color('danger'),
-            ];
-        }
+        app(TenantService::class)->newSession();
+        Notification::make()
+            ->title('Нова сесія розпочата')
+            ->body('Статистика та угоди фільтруються з ' . now()->format('d.m.Y H:i'))
+            ->success()
+            ->send();
+        $this->dispatch('dashboardRefresh');
+    }
 
-        return [
-            Stat::make('Equity (сума)', number_format($equity, 2) . ' USDT')
-                ->color('primary'),
-            Stat::make('PnL (закриті)', number_format($pnl, 2) . ' USDT')
-                ->color($pnl >= 0 ? 'success' : 'danger'),
-            Stat::make('Win Rate', $winRate . '%')
-                ->description("{$wins}/{$total} угод")
-                ->color($winRate >= 50 ? 'success' : 'warning'),
-            Stat::make('Активні боти', "{$running}/{$totalBots}")
-                ->color('info'),
-        ];
+    public function clearSession(): void
+    {
+        app(TenantService::class)->clearSession();
+        Notification::make()
+            ->title('Фільтр сесії знято')
+            ->body('Показуються всі угоди за весь час')
+            ->info()
+            ->send();
+        $this->dispatch('dashboardRefresh');
+    }
+
+    protected function getViewData(): array
+    {
+        $t = app(TenantService::class);
+        try {
+            return [
+                'stats'          => $t->getStats(),
+                'sessionStart'   => $t->getSessionStart(),
+                'canManageSession' => $t->canManageSession(),
+            ];
+        } catch (\Throwable $e) {
+            return ['error' => $e->getMessage(), 'sessionStart' => null, 'canManageSession' => false];
+        }
     }
 }

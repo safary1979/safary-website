@@ -2,34 +2,59 @@
 
 namespace App\Filament\Widgets;
 
-use App\Models\Bot;
-use Filament\Tables;
-use Filament\Tables\Table;
-use Filament\Widgets\TableWidget as BaseWidget;
+use App\Services\BotCommandService;
+use App\Services\TenantService;
+use Filament\Notifications\Notification;
+use Filament\Widgets\Widget;
+use Livewire\Attributes\On;
 
-class ActiveBotsWidget extends BaseWidget
+class ActiveBotsWidget extends Widget
 {
     protected static ?int $sort = 2;
     protected int | string | array $columnSpan = 'full';
-    protected static ?string $heading = 'Активні боти';
-    protected ?string $pollingInterval = '10s';
+    protected static ?string $pollingInterval = null;
+    protected static string $view = 'filament.widgets.active-bots';
 
-    public function table(Table $table): Table
+    public ?string $pollInterval = null; // null | '5' | '15'
+
+    #[On('dashboardRefresh')]
+    public function refresh(): void {}
+
+    public function setPollInterval(?string $v): void
     {
-        return $table
-            ->query(Bot::query()->whereIn('status', ['running', 'paused']))
-            ->columns([
-                Tables\Columns\TextColumn::make('slug')->searchable(),
-                Tables\Columns\TextColumn::make('pair'),
-                Tables\Columns\TextColumn::make('exchange')->badge(),
-                Tables\Columns\TextColumn::make('direction')->badge(),
-                Tables\Columns\TextColumn::make('timeframe'),
-                Tables\Columns\TextColumn::make('status')->badge()
-                    ->color(fn ($state) => $state === 'running' ? 'success' : 'warning'),
-                Tables\Columns\TextColumn::make('state.equity')->label('Equity')->numeric(2),
-                Tables\Columns\TextColumn::make('state.mark_price')->label('Mark')->numeric(4),
-                Tables\Columns\TextColumn::make('state.trades_count')->label('Trades'),
-            ])
-            ->paginated(false);
+        $this->pollInterval = in_array($v, ['5', '15'], true) ? $v : null;
+        $this->dispatch('dashboardRefresh');
+    }
+
+    public function triggerRefresh(): void { $this->dispatch('dashboardRefresh'); }
+    public function manualUpdate(): void   { $this->dispatch('dashboardRefresh'); }
+
+    public function setActiveTenant(int $id): void
+    {
+        app(TenantService::class)->setViewing($id);
+        $this->js('window.location.reload()');
+    }
+
+    public function closePosition(int $botId): void
+    {
+        if (! app(TenantService::class)->canControl()) return; // read-only guard
+        app(BotCommandService::class)->closePosition($botId);
+        Notification::make()
+            ->title('Команда надіслана')
+            ->body('Позиція буде закрита протягом кількох секунд.')
+            ->success()
+            ->send();
+    }
+
+    protected function getViewData(): array
+    {
+        $t = app(TenantService::class);
+        return [
+            'bots'         => $t->getActiveBots(),
+            'canControl'   => $t->canControl(),
+            'canSwitch'    => $t->canSwitch(),
+            'activeTenant' => $t->viewingTenantId(),
+            'tenants'      => $t->availableTenants(),
+        ];
     }
 }

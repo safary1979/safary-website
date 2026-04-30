@@ -12,7 +12,7 @@ class BotCommandService
         return BotCommand::create([
             'bot_id' => $botId,
             'command' => $command,
-            'payload_json' => $payload ? json_encode($payload) : null,
+            'payload_json' => $payload ?: null, // model casts to array → Eloquent json_encodes
             'status' => 'pending',
             'issued_by' => Auth::user()?->email ?? 'system',
             'issued_at' => now(),
@@ -26,4 +26,6 @@ class BotCommandService
     {
         return $this->issue($botId, 'start', $configPath ? ['config_path' => $configPath] : []);
     }
+
+    public function closePosition(int $botId): BotCommand { return $this->issue($botId, 'close_position'); }
 }

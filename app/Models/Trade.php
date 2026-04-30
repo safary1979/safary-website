@@ -15,4 +15,9 @@ class Trade extends Model
         'entry_time' => 'datetime',
         'exit_time' => 'datetime',
     ];
+
+    public function bot()
+    {
+        return $this->belongsTo(\App\Models\Bot::class, 'bot_id');
+    }
 }
