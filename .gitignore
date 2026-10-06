@@ -21,3 +21,26 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+
+# Server runtime and generated Laravel files
+.env.*
+!.env.example
+/bootstrap/cache/*
+!/bootstrap/cache/.gitignore
+/storage/framework/*
+!/storage/framework/.gitignore
+/storage/logs/*
+!/storage/logs/.gitignore
+/storage/app/*
+!/storage/app/.gitignore
+!/storage/app/private/
+!/storage/app/public/
+/storage/app/private/*
+!/storage/app/private/.gitignore
+/storage/app/public/*
+!/storage/app/public/.gitignore
+/database/*.sqlite*
+*.bak
+*.orig
+*.pre_*
+*~
