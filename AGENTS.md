@@ -6,7 +6,7 @@
 
 # Контекст цього сайту
 
-- Робочий контекст: `/home/ubuntu/Freqtrade/docs/PROJECT_CONTEXT.md`; домовленості та відкриті задачі: `/home/ubuntu/Freqtrade/docs/PROJECT_DECISIONS.md`. Читай подробиці лише за темою поточного запиту.
+- Правила й факти проєкту: `/home/ubuntu/Freqtrade/CLAUDE.md`; чинні рішення користувача: `/home/ubuntu/Freqtrade/docs/DECISIONS.md`. Старі журнали в `/home/ubuntu/Freqtrade/docs/archive/` — лише пошук за темою.
 - Поточний стан перевіряй на новому сервері; історичний контекст не є актуальним статусом служб чи біржі. Нова команда користувача має пріоритет, раніше надані погодження зберігаються.
 - Для live read-only статусу ByNau діє вузький `/home/ubuntu/Freqtrade/nautilus_live/bybit_sol_long/ops_context/BOOTSTRAP.md` і його обсяг читання.
 
