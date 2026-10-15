@@ -8,7 +8,7 @@
     <section style="padding:1rem;border:1px solid #2563eb;border-radius:.5rem;background:#020617;">
         <strong style="color:#f8fafc;">SOL / Bybit · окремі кампанії Long та Short</strong>
         <p style="color:#94a3b8;font-size:.85rem;">Рахунок 3000 USDT · позиція 4000 USDT · 4× · історичний funding. Ретроспективний пошук 2024–2025, перевірка 2026. Пара — наступний етап.</p>
-        <p style="color:#94a3b8;font-size:.85rem;">Справна робота пілоту: {{ number_format(($dual['pilot']['healthy_seconds'] ?? 0)/3600, 2) }} год / {{ $dual['pilot']['hours'] ?? 72 }} год.</p>
+        <p style="color:#94a3b8;font-size:.85rem;">Справна робота пілоту: {{ number_format(($dual['pilot']['healthy_seconds'] ?? 0)/3600, 2) }} год.</p>
         <p style="color:#94a3b8;font-size:.85rem;">Непідтверджений / несправний час під час роботи: {{ number_format((($dual['pilot']['unobserved_seconds'] ?? 0)+($dual['pilot']['unhealthy_seconds'] ?? 0))/3600,2) }} год. Процеси тестів: {{ $dual['worker_liveness']['alive'] ?? 0 }} / {{ $dual['worker_liveness']['reported'] ?? 0 }}.</p>
         @if (isset($dual['host_load_1_5_15']))<p style="color:#94a3b8;font-size:.85rem;">Load 1/5/15 хв: {{ implode(' / ', array_map(fn($value)=>number_format($value,2),$dual['host_load_1_5_15'])) }} · доступна RAM {{ number_format(($dual['available_memory_bytes'] ?? 0)/1073741824,1) }} GiB.</p>@endif
         @foreach (['long'=>'Long', 'short'=>'Short'] as $side=>$label)
