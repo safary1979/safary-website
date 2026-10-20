@@ -64,7 +64,7 @@ class FreqtradeGatewayService
             return [];
         }
 
-        $data = $this->filterDataByExchange($result['data'], $exchange);
+        $data = $this->withoutPairByView($this->filterDataByExchange($result['data'], $exchange));
         $databases = is_array($data['trade_databases'] ?? null) ? $data['trade_databases'] : [];
         $docker = is_array($data['docker'] ?? null) ? $data['docker'] : [];
         $runningNames = array_values(array_filter((array) ($docker['running_names'] ?? []), 'is_string'));
@@ -434,6 +434,25 @@ class FreqtradeGatewayService
         return $data;
     }
 
+    /**
+     * The main LIVE dashboard shows only the ByNau grid: the PairBy and ByCopy bots and their trades are shown in the
+     * dashboard's PairBy view (PairByBotService), so they are left out here.
+     */
+    private function withoutPairByView(array $data): array
+    {
+        $other = fn (string $ref): bool => preg_match('/^(nautilus:)?(PairBy|ByCopy)/', $ref) === 1;
+        $data['nautilus_bots'] = array_values(array_filter(
+            is_array($data['nautilus_bots'] ?? null) ? $data['nautilus_bots'] : [],
+            fn ($bot) => is_array($bot) && ! $other((string) ($bot['bot_id'] ?? '')),
+        ));
+        $data['nautilus_closed_trades'] = array_values(array_filter(
+            is_array($data['nautilus_closed_trades'] ?? null) ? $data['nautilus_closed_trades'] : [],
+            fn ($trade) => is_array($trade) && ! $other((string) ($trade['bot_ref'] ?? '')),
+        ));
+
+        return $data;
+    }
+
     /** Keep confirmed Bybit LIVE history while allowing future production fills. */
     private function filterBybitLiveHistory(array $data): array
     {
@@ -626,7 +645,7 @@ class FreqtradeGatewayService
             return null;
         }
 
-        $data = $this->filterDataByExchange($result['data'], $exchange);
+        $data = $this->withoutPairByView($this->filterDataByExchange($result['data'], $exchange));
         if (strtolower((string) $exchange) === 'bybit') {
             $data = $this->filterBybitLiveHistory($data);
         }
@@ -712,7 +731,7 @@ class FreqtradeGatewayService
             return null;
         }
 
-        $data = $this->filterDataByExchange($result['data'], $exchange);
+        $data = $this->withoutPairByView($this->filterDataByExchange($result['data'], $exchange));
         if (strtolower((string) $exchange) === 'bybit') {
             $data = $this->filterBybitLiveHistory($data);
         }

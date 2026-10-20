@@ -36,7 +36,7 @@
                                color:{{ $sourceOn ? '#f9fafb' : '#9ca3af' }};"
                         title="{{ $sourceTitle }}"
                     >
-                        <span wire:loading.remove wire:target="toggleSource">{{ $sourceLabel }}</span>
+                        <span wire:loading.remove wire:target="toggleSource">{{ $sourceLabel }}@if($sourceKey === 'pairby' && ($pairbyCount ?? null)) {{ $pairbyCount }}@endif</span>
                         <span wire:loading wire:target="toggleSource">…</span>
                     </button>
                 @endforeach

@@ -73,6 +73,7 @@ class StatsOverview extends Widget
                 'modeAvailable'  => $t->dashboardModeAvailable(),
                 'svertusAvailable' => $t->svertusAvailable(),
                 'dashboardSource' => $t->dashboardSource(),
+                'pairbyCount' => $t->svertusAvailable() ? $this->pairbyCount() : null,
             ];
         } catch (\Throwable $e) {
             return [
@@ -84,5 +85,14 @@ class StatsOverview extends Widget
                 'modeAvailable' => false,
             ];
         }
+    }
+
+    /** «in a trade / bots» of the PairBy view, the same in-position rule as the bot cards. */
+    private function pairbyCount(): string
+    {
+        $bots = app(\App\Services\PairByBotService::class)->bots();
+        $inTrade = count(array_filter($bots, fn ($bot) => ! empty($bot->state?->position_json)));
+
+        return $inTrade . '/' . count($bots);
     }
 }
