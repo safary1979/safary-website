@@ -2,8 +2,6 @@
 
 namespace App\Filament\Pages;
 
-use App\Models\Bot;
-use App\Services\TenantService;
 use Filament\Pages\Page;
 use PDO;
 
@@ -16,25 +14,28 @@ class ChartPage extends Page
 
     protected static string $view = 'filament.pages.chart';
 
-    private const BACKTESTER_DB = '/home/ubuntu/SafaryEngine/data/backtester.db';
+    private const MARKET_DATA_DB = '/home/ubuntu/website/storage/app/market-data/market_data.sqlite';
 
-    public string  $exchange = 'okx';
-    public string  $symbol   = 'HYPE/USDT:USDT';
+    public string  $exchange = 'bybit';
+    public string  $symbol   = 'SOL/USDT:USDT';
     public string  $tf       = '1h';
     public ?int    $botId    = null;
     public ?string $botName  = null;
+    public ?string $botRef   = null;
 
     public function mount(): void
     {
         $req = request();
-        if ($req->has('exchange')) $this->exchange = $req->input('exchange', 'okx');
-        if ($req->has('symbol'))   $this->symbol   = $req->input('symbol',   'HYPE/USDT:USDT');
+        if ($req->has('exchange')) $this->exchange = $req->input('exchange', 'bybit');
+        if ($req->has('symbol'))   $this->symbol   = $req->input('symbol',   'SOL/USDT:USDT');
         if ($req->has('tf'))       $this->tf        = $req->input('tf',       '1h');
-        if ($req->has('bot_id')) {
-            $this->botId   = (int) $req->input('bot_id');
-            $bot = \App\Models\Bot::find($this->botId);
-            $this->botName = $bot?->slug;
+        $candidateRef = (string) $req->input('bot_ref', '');
+        if (preg_match('/^(nautilus|freqtrade):[A-Za-z0-9._-]+$/', $candidateRef)) {
+            $this->botRef = $candidateRef;
+            $this->botName = $candidateRef;
         }
+        // The chart is deliberately independent from live-bot databases.
+        // Legacy bot_id links still open the chart, but never make rendering fail.
     }
 
     public static function canAccess(): bool
@@ -44,19 +45,14 @@ class ChartPage extends Page
 
     protected function getViewData(): array
     {
-        $tenant = app(TenantService::class);
+        $dbSymbols = $this->loadAvailableSymbols();
 
-        // ── Read available exchange/symbol pairs from backtester.db ──────
-        $dbSymbols = $this->loadDbSymbols();
-
-        // ── Also merge symbols from bot records (in case they're not yet in candle db) ──
-        foreach (Bot::select('exchange', 'symbol')->distinct()->get() as $b) {
-            $full = $this->toFullSymbol($b->exchange, $b->symbol);
-            $exch = strtolower($b->exchange);
-            if (! isset($dbSymbols[$exch])) $dbSymbols[$exch] = [];
-            if (! in_array($full, $dbSymbols[$exch])) {
-                $dbSymbols[$exch][] = $full;
-            }
+        $currentExchange = strtolower($this->exchange);
+        if (! isset($dbSymbols[$currentExchange])) {
+            $dbSymbols[$currentExchange] = [];
+        }
+        if (! in_array($this->symbol, $dbSymbols[$currentExchange], true)) {
+            $dbSymbols[$currentExchange][] = $this->symbol;
         }
 
         // Sort exchanges and symbols predictably
@@ -66,8 +62,6 @@ class ChartPage extends Page
         }
         unset($syms);
 
-        $sessionStart = $tenant->getSessionStart();
-
         return [
             'symbolsByExchange' => $dbSymbols,          // ['okx' => ['HYPE/USDT:USDT', ...], ...]
             'exchange'          => $this->exchange,
@@ -75,38 +69,35 @@ class ChartPage extends Page
             'tf'                => $this->tf,
             'botId'             => $this->botId,
             'botName'           => $this->botName,
-            'sessionStart'      => $sessionStart?->timestamp,
+            'botRef'            => $this->botRef,
+            'sessionStart'      => null,
         ];
     }
 
-    /** Read distinct exchange+symbol from backtester.db candles table (cached 10 min). */
-    private function loadDbSymbols(): array
+    /** The chart reads only its dedicated market-data store. */
+    private function loadAvailableSymbols(): array
     {
-        return \Illuminate\Support\Facades\Cache::remember('chart_db_symbols', 600, function () {
-            if (! file_exists(self::BACKTESTER_DB)) return [];
-            try {
-                $pdo = new PDO('sqlite:' . self::BACKTESTER_DB);
-                // Use index-friendly query: scan index prefix per exchange group
-                $rows = $pdo->query(
-                    "SELECT exchange, symbol FROM candles
-                     GROUP BY exchange, symbol
-                     ORDER BY exchange, symbol"
-                )->fetchAll(PDO::FETCH_ASSOC);
-
-                $out = [];
-                foreach ($rows as $r) {
-                    $out[strtolower($r['exchange'])][] = $r['symbol'];
+        if (! file_exists(self::MARKET_DATA_DB)) {
+            return [];
+        }
+        try {
+            $pdo = new PDO('sqlite:' . self::MARKET_DATA_DB);
+            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $rows = $pdo->query(
+                "SELECT exchange, symbol FROM instruments
+                 WHERE active = 1 ORDER BY exchange, symbol"
+            )->fetchAll(PDO::FETCH_ASSOC);
+            $out = [];
+            foreach ($rows as $row) {
+                $exchange = strtolower((string) ($row['exchange'] ?? ''));
+                $symbol = (string) ($row['symbol'] ?? '');
+                if ($exchange !== '' && $symbol !== '') {
+                    $out[$exchange][] = $symbol;
                 }
-                return $out;
-            } catch (\Throwable) {
-                return [];
             }
-        });
-    }
-
-    private function toFullSymbol(string $exchange, string $symbol): string
-    {
-        if (str_contains($symbol, '/')) return $symbol;
-        return strtoupper($symbol) . '/USDT:USDT';
+            return $out;
+        } catch (\Throwable) {
+            return [];
+        }
     }
 }

@@ -27,6 +27,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->favicon(asset('favicon.svg'))
             ->sidebarWidth('10rem')
             ->sidebarCollapsibleOnDesktop()
             ->profile(\App\Filament\Pages\EditProfile::class)
@@ -57,6 +58,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
+                \App\Http\Middleware\EnsureTwoFactorVerified::class,
             ]);
     }
 }

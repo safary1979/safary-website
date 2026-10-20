@@ -22,6 +22,13 @@ class BotCommandService
     public function pause(int $botId): BotCommand    { return $this->issue($botId, 'pause'); }
     public function resume(int $botId): BotCommand   { return $this->issue($botId, 'resume'); }
     public function stop(int $botId): BotCommand     { return $this->issue($botId, 'stop'); }
+    public function restart(int $botId, ?string $configPath = null, ?string $account = null): BotCommand
+    {
+        return $this->issue($botId, 'restart', array_filter([
+            'config_path' => $configPath,
+            'account' => $account,
+        ]));
+    }
     public function start(int $botId, ?string $configPath = null): BotCommand
     {
         return $this->issue($botId, 'start', $configPath ? ['config_path' => $configPath] : []);

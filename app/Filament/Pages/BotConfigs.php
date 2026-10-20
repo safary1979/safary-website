@@ -281,6 +281,10 @@ class BotConfigs extends Page implements HasForms
             Notification::make()->title('Оберіть конфіг')->warning()->send();
             return;
         }
+        if (! app(\App\Services\TenantService::class)->viewingHasDb()) {
+            Notification::make()->title('Запуск зі старої БД вимкнений')->body('Для live-ботів використовуйте керування на Dashboard.')->warning()->send();
+            return;
+        }
         $account = $data['account'] ?? null;
         if (!$account) {
             Notification::make()->title('Оберіть акаунт')->warning()->send();
@@ -307,7 +311,7 @@ class BotConfigs extends Page implements HasForms
                 ->visible(fn () => $canControl && (bool) $this->selectedPath),
             Action::make('launch')->label('Запустити бота')->icon('heroicon-o-rocket-launch')
                 ->color('success')
-                ->visible(fn () => $canControl && (bool) $this->selectedPath)
+                ->visible(fn () => $canControl && app(\App\Services\TenantService::class)->viewingHasDb() && (bool) $this->selectedPath)
                 ->form([
                     Select::make('account')
                         ->label('API key / акаунт')

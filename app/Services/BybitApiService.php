@@ -102,6 +102,9 @@ class BybitApiService
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT        => 10,
+            // The exchange key is whitelisted for this server's IPv4 address.
+            // Do not let PHP cURL select the server's separate IPv6 egress.
+            CURLOPT_IPRESOLVE      => CURL_IPRESOLVE_V4,
             CURLOPT_HTTPHEADER     => array_merge($headers, ['Content-Type: application/json']),
         ]);
         $response = curl_exec($ch);

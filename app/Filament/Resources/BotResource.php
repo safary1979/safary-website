@@ -29,7 +29,8 @@ class BotResource extends Resource
 
     public static function canAccess(): bool
     {
-        return app(\App\Services\TenantService::class)->canControl();
+        $tenant = app(\App\Services\TenantService::class);
+        return $tenant->canControl() && $tenant->viewingHasDb();
     }
 
     public static function shouldRegisterNavigation(): bool
