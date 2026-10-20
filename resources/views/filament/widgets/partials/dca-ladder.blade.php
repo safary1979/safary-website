@@ -57,23 +57,32 @@
             <span style="color:#f59e0b; font-weight:700;">DCA {{ $completed }}/{{ $maxAdditions }}</span>
             <span style="color:#60a5fa; font-weight:600;">{{ $format($current) }}</span>
         </div>
-        <div style="position:relative; height:18px; margin:0 2px;">
-            <div style="position:absolute; left:0; right:0; top:7px; height:5px; background:#1f2937; border-radius:999px;"></div>
+        {{-- Entry: white bar with a thin violet core; filled additions grey, pending ones amber outlines; green is the TP only. --}}
+        <div style="position:relative; height:30px; margin:0 2px;">
+            <div style="position:absolute; left:0; right:0; top:17px; height:5px; background:#1f2937; border-radius:999px;"></div>
             @if($initial && is_numeric($initial['price'] ?? null))
-                <span title="Вхід {{ $format($initial['price']) }}" style="position:absolute; left:{{ $lanePct((float)$initial['price']) }}%; top:4px; width:8px; height:11px; background:#f8fafc; border-radius:2px; transform:translateX(-50%);"></span>
+                <span title="Вхід {{ $format($initial['price']) }}" style="position:absolute; left:{{ $lanePct((float)$initial['price']) }}%; top:11px; width:7px; height:18px; background:linear-gradient(90deg, #f8fafc 3px, #a855f7 3px, #a855f7 4px, #f8fafc 4px); border-radius:2px; transform:translateX(-50%);"></span>
             @endif
             @foreach($additions as $row)
-                @php $markerColor = $orderColor($row); @endphp
-                <span title="{{ $row['label'] ?? 'DCA' }} {{ $format($row['price'] ?? 0) }} · {{ $orderLabel($row) }}" style="position:absolute; left:{{ $lanePct((float)($row['price'] ?? 0)) }}%; top:3px; width:9px; height:13px; background:{{ $markerColor }}; border:1px solid #0f172a; border-radius:3px; transform:translateX(-50%);"></span>
+                @php
+                    $rowStatus = $row['status'] ?? 'pending';
+                    $markerStyle = match ($rowStatus) {
+                        'filled' => 'background:#94a3b8; border:1px solid #0f172a;',
+                        'pending' => 'background:#111827; border:2px solid #f59e0b;',
+                        default => 'background:' . $orderColor($row) . '; border:1px solid #0f172a;',
+                    };
+                @endphp
+                <span title="{{ $row['label'] ?? 'DCA' }} {{ $format($row['price'] ?? 0) }} · {{ $orderLabel($row) }}" style="position:absolute; left:{{ $lanePct((float)($row['price'] ?? 0)) }}%; top:13px; width:9px; height:13px; {{ $markerStyle }} box-sizing:border-box; border-radius:3px; transform:translateX(-50%);"></span>
             @endforeach
             @if($current > 0)
-                <span title="Поточна ціна {{ $format($current) }}" style="position:absolute; left:{{ $lanePct($current) }}%; top:1px; width:3px; height:18px; background:#60a5fa; border-radius:2px; transform:translateX(-50%); box-shadow:0 0 5px #60a5fa99;"></span>
+                <span title="Поточна ціна {{ $format($current) }}" style="position:absolute; left:{{ $lanePct($current) }}%; top:11px; width:3px; height:18px; background:#60a5fa; border-radius:2px; transform:translateX(-50%); box-shadow:0 0 5px #60a5fa99;"></span>
             @endif
             @if($tpPrice)
-                <span title="TP {{ $format($tpPrice) }}" style="position:absolute; left:{{ $lanePct((float)$tpPrice) }}%; top:4px; width:3px; height:11px; background:#22c55e; border-radius:2px; transform:translateX(-50%);"></span>
+                <span style="position:absolute; left:{{ $lanePct((float)$tpPrice) }}%; top:-1px; font-size:0.62rem; font-weight:700; line-height:1; color:#4ade80; transform:translateX(-50%);">TP</span>
+                <span title="TP {{ $format($tpPrice) }}" style="position:absolute; left:{{ $lanePct((float)$tpPrice) }}%; top:11px; width:5px; height:18px; background:#4ade80; border:1px solid #f8fafc; box-sizing:border-box; border-radius:2px; transform:translateX(-50%); z-index:1;"></span>
             @endif
             @if($slPrice)
-                <span title="SL {{ $format($slPrice) }}" style="position:absolute; left:{{ $lanePct((float)$slPrice) }}%; top:4px; width:3px; height:11px; background:#ef4444; border-radius:2px; transform:translateX(-50%);"></span>
+                <span title="SL {{ $format($slPrice) }}" style="position:absolute; left:{{ $lanePct((float)$slPrice) }}%; top:11px; width:3px; height:18px; background:#ef4444; border-radius:2px; transform:translateX(-50%);"></span>
             @endif
         </div>
         <div style="display:flex; justify-content:space-between; gap:0.5rem; font-size:0.6rem; color:#64748b;">
