@@ -392,9 +392,17 @@
                 >
                     {{-- Left: name + badges --}}
                     <div style="display:flex; flex-direction:column; gap:0.3rem; min-width:0;">
+                        <div style="display:flex; align-items:center; gap:0.35rem; min-width:0;">
                         <span style="font-weight:600; font-size:0.85rem; color:#f3f4f6; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
                             {{ $displayName }}
                         </span>
+                        <button type="button" title="Копіювати назву"
+                            x-data="{ done: false }"
+                            @click.stop="(navigator.clipboard ? navigator.clipboard.writeText($el.dataset.copy) : Promise.reject()).catch(() => { const t = document.createElement('textarea'); t.value = $el.dataset.copy; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); }).finally(() => { done = true; setTimeout(() => done = false, 1200); })"
+                            data-copy="{{ $displayName }}"
+                            style="flex:none; border:0; background:transparent; padding:0 0.15rem; font-size:0.8rem; line-height:1; color:#6b7280; cursor:pointer;"
+                            x-text="done ? '✓' : '⧉'">⧉</button>
+                        </div>
                         <span style="font-size:0.62rem; color:#6b7280; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
                             {{ $displaySubName }}
                         </span>
