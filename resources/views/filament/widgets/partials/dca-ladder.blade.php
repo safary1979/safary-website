@@ -57,11 +57,11 @@
             <span style="color:#f59e0b; font-weight:700;">DCA {{ $completed }}/{{ $maxAdditions }}</span>
             <span style="color:#60a5fa; font-weight:600;">{{ $format($current) }}</span>
         </div>
-        {{-- Entry: white bar with a thin violet core; filled additions grey, pending ones amber outlines; green is the TP only. --}}
+        {{-- Entry: white bar; filled additions grey, pending ones amber outlines; green is the TP only. --}}
         <div style="position:relative; height:30px; margin:0 2px;">
             <div style="position:absolute; left:0; right:0; top:17px; height:5px; background:#1f2937; border-radius:999px;"></div>
             @if($initial && is_numeric($initial['price'] ?? null))
-                <span title="Вхід {{ $format($initial['price']) }}" style="position:absolute; left:{{ $lanePct((float)$initial['price']) }}%; top:11px; width:7px; height:18px; background:linear-gradient(90deg, #f8fafc 3px, #a855f7 3px, #a855f7 4px, #f8fafc 4px); border-radius:2px; transform:translateX(-50%);"></span>
+                <span title="Вхід {{ $format($initial['price']) }}" style="position:absolute; left:{{ $lanePct((float)$initial['price']) }}%; top:11px; width:7px; height:18px; background:#f8fafc; border-radius:2px; transform:translateX(-50%);"></span>
             @endif
             @foreach($additions as $row)
                 @php
