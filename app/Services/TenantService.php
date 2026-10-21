@@ -188,7 +188,20 @@ class TenantService
             'generated_at_utc' => $snapshot['generated_at_utc'] ?? null,
             'age_seconds' => $snapshot['age_seconds'] ?? null,
             'error' => $snapshot['error'] ?? null,
+            'host' => $this->hostLoad(),
         ];
+    }
+
+    /** Load 1/5/15 min and available RAM of this server, the same sources as the Autofon panel (os.getloadavg, MemAvailable). */
+    private function hostLoad(): ?array
+    {
+        $load = sys_getloadavg();
+        $meminfo = @file_get_contents('/proc/meminfo');
+        if ($load === false || ! is_string($meminfo) || ! preg_match('/^MemAvailable:\s+(\d+) kB/m', $meminfo, $m)) {
+            return null;
+        }
+
+        return ['load' => $load, 'available_gib' => (int) $m[1] / 1048576];
     }
 
     /** No selected-mode fallback is allowed when the selected source is absent. */
