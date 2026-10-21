@@ -64,7 +64,7 @@
             <div style="margin:-0.35rem 0 0.65rem; font-size:0.68rem; color:{{ $gatewayStatus['available'] ? '#64748b' : '#f87171' }};">
                 @if($gatewayStatus['available'])
                     Дані Gateway: {{ $gatewayStatus['generated_at_utc'] ?? '—' }} · {{ $gatewayStatus['age_seconds'] ?? '—' }} с тому
-                    @if($gatewayStatus['host'] ?? null) · Load {{ implode(' / ', array_map(fn ($v) => number_format($v, 2), $gatewayStatus['host']['load'])) }} · RAM {{ number_format($gatewayStatus['host']['available_gib'], 1) }} GiB @endif
+                    @if($gatewayStatus['host'] ?? null) · Load 1/5/15 хв: {{ implode(' / ', array_map(fn ($v) => number_format($v, 2), $gatewayStatus['host']['load'])) }} · доступна RAM {{ number_format($gatewayStatus['host']['available_gib'], 1) }} GiB @endif
                 @else
                     Gateway недоступний: {{ $gatewayStatus['error'] ?? 'невідома помилка' }}
                 @endif
